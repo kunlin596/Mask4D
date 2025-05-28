@@ -5,9 +5,10 @@ import click
 import torch
 import yaml
 from easydict import EasyDict as edict
+from pytorch_lightning import Trainer, seed_everything
+
 from mask_4d.datasets.kitti_dataset import SemanticDatasetModule
 from mask_4d.models.mask_model import Mask4D
-from pytorch_lightning import Trainer, seed_everything
 
 
 def getDir(obj):
@@ -19,15 +20,9 @@ def getDir(obj):
 @click.option("--save_testset", is_flag=True)
 def main(w, save_testset):
     seed_everything(42, workers=True)
-    model_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/model.yaml")))
-    )
-    backbone_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/backbone.yaml")))
-    )
-    decoder_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/decoder.yaml")))
-    )
+    model_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/model.yaml"))))
+    backbone_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/backbone.yaml"))))
+    decoder_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/decoder.yaml"))))
     cfg = edict({**model_cfg, **backbone_cfg, **decoder_cfg})
 
     cfg.EVALUATE = True

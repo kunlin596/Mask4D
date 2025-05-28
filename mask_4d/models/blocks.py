@@ -1,17 +1,16 @@
 from typing import Optional
 
 import torch
-from mask_4d.models.position_attention import PositionAttention
 from torch import Tensor, nn
 from torch.nn import functional as F
+
+from mask_4d.models.position_attention import PositionAttention
 
 
 class SelfAttentionLayer(nn.Module):
     def __init__(self, d_model, nhead, dropout=0.0, pre_norm=False, activation="relu"):
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(
-            d_model, nhead, dropout=dropout, batch_first=True
-        )
+        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
 
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)

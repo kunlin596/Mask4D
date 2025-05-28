@@ -4,8 +4,7 @@ from functools import partial
 import numpy as np
 import torch
 import torch.nn as nn
-from sptr import (SparseTrTensor, get_indices_params, sparse_self_attention,
-                  to_3d_numpy)
+from sptr import SparseTrTensor, get_indices_params, sparse_self_attention, to_3d_numpy
 from timm.models.layers import DropPath, trunc_normal_
 
 
@@ -88,7 +87,7 @@ class SparseMultiheadSASphereConcat(nn.Module):
         qk_scale=None,
         qkv_bias=True,
         algo="native",
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -144,9 +143,7 @@ class SparseMultiheadSASphereConcat(nn.Module):
                 trunc_normal_(self.relative_pos_value_table, std=0.02)
             self.quant_grid_length = quant_grid_length
 
-            quant_grid_length_sphere = int(
-                (window_size_sphere[0] + 1e-4) / quant_size_sphere[0]
-            )
+            quant_grid_length_sphere = int((window_size_sphere[0] + 1e-4) / quant_size_sphere[0])
             assert int((window_size_sphere[0] + 1e-4) / quant_size_sphere[0]) == int(
                 (window_size_sphere[1] + 1e-4) / quant_size_sphere[1]
             )
@@ -154,23 +151,17 @@ class SparseMultiheadSASphereConcat(nn.Module):
             num_heads_brc2 = num_heads - num_heads_brc1
             if self.rel_query:
                 self.relative_pos_query_table_sphere = nn.Parameter(
-                    torch.zeros(
-                        2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim
-                    )
+                    torch.zeros(2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim)
                 )
                 trunc_normal_(self.relative_pos_query_table_sphere, std=0.02)
             if self.rel_key:
                 self.relative_pos_key_table_sphere = nn.Parameter(
-                    torch.zeros(
-                        2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim
-                    )
+                    torch.zeros(2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim)
                 )
                 trunc_normal_(self.relative_pos_key_table_sphere, std=0.02)
             if self.rel_value:
                 self.relative_pos_value_table_sphere = nn.Parameter(
-                    torch.zeros(
-                        2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim
-                    )
+                    torch.zeros(2 * quant_grid_length_sphere, 3, num_heads_brc2, head_dim)
                 )
                 trunc_normal_(self.relative_pos_value_table_sphere, std=0.02)
             self.quant_grid_length_sphere = quant_grid_length_sphere
@@ -221,9 +212,7 @@ class SparseMultiheadSASphereConcat(nn.Module):
                 index_1_sphere,
                 index_1_offsets_sphere,
                 sort_idx_sphere,
-            ) = get_indices_params(
-                xyz_sphere, batch, self.window_size_sphere, self.shift_win
-            )
+            ) = get_indices_params(xyz_sphere, batch, self.window_size_sphere, self.shift_win)
             sptr_tensor.indice_dict[self.indice_key] = (
                 index_0,
                 index_0_offsets,
@@ -390,9 +379,7 @@ class SphereFormer(nn.Module):
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer
-        )
+        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer)
 
     def forward(self, feats, xyz, batch):
         short_cut = feats

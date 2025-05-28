@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 import yaml
+
 from mask_4d.utils.eval_np import Panoptic4DEval
 
 
@@ -28,7 +29,7 @@ class PanopticKitti4DEvaluator:
     def load_kitti_config(self, config_file):
         # Load semantic-kitti config
         # data = yaml.safe_load(open('datasets/semantic-kitti.yaml', 'r'))
-        data = yaml.safe_load(open(config_file, "r"))
+        data = yaml.safe_load(open(config_file))
         # get number of interest classes, and the label mappings
         class_remap = data["learning_map"]
         self.class_inv_remap = data["learning_map_inv"]
@@ -43,9 +44,7 @@ class PanopticKitti4DEvaluator:
         self.ignore_class = [cl for cl, ignored in class_ignore.items() if ignored]
 
         self.class_inv_lut = np.zeros((20), dtype=np.int32)
-        self.class_inv_lut[list(self.class_inv_remap.keys())] = list(
-            self.class_inv_remap.values()
-        )
+        self.class_inv_lut[list(self.class_inv_remap.keys())] = list(self.class_inv_remap.values())
 
         self.things = get_things()
         self.stuff = get_stuff()
@@ -128,7 +127,7 @@ class PanopticKitti4DEvaluator:
                 )
             )
         for key in self.mean_metrics.keys():
-            print("{}:\t{}".format(key, self.mean_metrics[key]))
+            print(f"{key}:\t{self.mean_metrics[key]}")
 
     def print_fp_fn(self):
         print("True Positive: ")

@@ -54,9 +54,7 @@ def fit_ellipse(points):
     N = points.shape[0]
     X = points[:, :2]
     X = X - X.mean(0)
-    _out = torch.linalg.svd(
-        (X - X.mean(axis=0)) / torch.sqrt(torch.tensor(N)), full_matrices=False
-    )
+    _out = torch.linalg.svd((X - X.mean(axis=0)) / torch.sqrt(torch.tensor(N)), full_matrices=False)
     angle = np.arctan2(_out.Vh[0, 1].cpu(), _out.Vh[0, 0].cpu()).cuda()
     zc = (torch.max(points[:, 2]) + torch.min(points[:, 2])) / 2
     dz = torch.cdist(points[:, 2].unsqueeze(1), zc.unsqueeze(0).unsqueeze(1))

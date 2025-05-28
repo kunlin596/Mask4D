@@ -1,9 +1,10 @@
 # Modified from https://github.com/facebookresearch/Mask2Former/blob/main/mask2former/modeling/transformer_decoder/mask2former_transformer_decoder.py
+import torch
+from torch import nn
+
 import mask_4d.models.blocks as blocks
 import mask_4d.utils.misc as misc
-import torch
 from mask_4d.models.positional_encoder import PositionalEncoder
-from torch import nn
 
 
 class MaskedTransformerDecoder(nn.Module):
@@ -31,9 +32,7 @@ class MaskedTransformerDecoder(nn.Module):
                 blocks.PositionCrossAttentionLayer(hidden_dim, self.nheads)
             )
 
-            self.transformer_ffn_layers.append(
-                blocks.FFNLayer(hidden_dim, cfg.DIM_FEEDFORWARD)
-            )
+            self.transformer_ffn_layers.append(blocks.FFNLayer(hidden_dim, cfg.DIM_FEEDFORWARD))
 
         if bb_cfg.CHANNELS[0] != hidden_dim:
             self.mask_feat_proj = nn.Linear(bb_cfg.CHANNELS[0], hidden_dim)
@@ -72,9 +71,7 @@ class MaskedTransformerDecoder(nn.Module):
         if output.shape[-1] > self.num_queries:
             mask_kernel = self.compute_kernel(q_centers, coors, size, angle, mask=True)
         else:
-            mask_kernel = torch.zeros((1, coors.shape[1], q_centers.shape[0])).to(
-                output.device
-            )
+            mask_kernel = torch.zeros((1, coors.shape[1], q_centers.shape[0])).to(output.device)
 
         outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
             output, mask_features, mask_kernel
@@ -107,9 +104,7 @@ class MaskedTransformerDecoder(nn.Module):
             output = self.transformer_ffn_layers[i](output)
 
             if output.shape[-1] > self.num_queries:
-                mask_kernel = self.compute_kernel(
-                    q_centers, coors, size, angle, mask=True
-                )
+                mask_kernel = self.compute_kernel(q_centers, coors, size, angle, mask=True)
             else:
                 mask_kernel = torch.zeros_like(outputs_mask)
 
@@ -151,10 +146,7 @@ class MaskedTransformerDecoder(nn.Module):
 
         # Create binary mask
         attn_mask = (
-            attn_mask.unsqueeze(1)
-            .repeat(1, self.nheads, 1, 1)
-            .flatten(0, 1)
-            .permute(0, 2, 1)
+            attn_mask.unsqueeze(1).repeat(1, self.nheads, 1, 1).flatten(0, 1).permute(0, 2, 1)
         )
 
         return outputs_class, outputs_mask, attn_mask
@@ -170,12 +162,8 @@ class MaskedTransformerDecoder(nn.Module):
         ]
 
     def compute_kernel(self, q_centers, coors, size, angle, mask=False):
-        dx = torch.cdist(
-            q_centers[self.num_queries :][:, 0].unsqueeze(1), coors[:, :, 0].T
-        )
-        dy = torch.cdist(
-            q_centers[self.num_queries :][:, 1].unsqueeze(1), coors[:, :, 1].T
-        )
+        dx = torch.cdist(q_centers[self.num_queries :][:, 0].unsqueeze(1), coors[:, :, 0].T)
+        dy = torch.cdist(q_centers[self.num_queries :][:, 1].unsqueeze(1), coors[:, :, 1].T)
 
         sx = size[self.num_queries :, 0]
         sy = size[self.num_queries :, 1]
@@ -187,8 +175,6 @@ class MaskedTransformerDecoder(nn.Module):
         k_weights = -0.5 * torch.einsum("bnd,bdd,bnd->bn", x_mu, inv_covs, x_mu)
         if mask:
             k_weights = torch.exp(k_weights)
-        kernel = torch.zeros((1, coors.shape[1], q_centers.shape[0])).to(
-            q_centers.device
-        )
+        kernel = torch.zeros((1, coors.shape[1], q_centers.shape[0])).to(q_centers.device)
         kernel[0, :, self.num_queries :] = k_weights.T
         return kernel

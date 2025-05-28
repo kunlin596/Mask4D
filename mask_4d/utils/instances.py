@@ -53,9 +53,7 @@ class Tracks:
 
     def __getattr__(self, name: str) -> Any:
         if name == "_fields" or name not in self._fields:
-            raise AttributeError(
-                "Cannot find field '{}' in the given Tracks!".format(name)
-            )
+            raise AttributeError(f"Cannot find field '{name}' in the given Tracks!")
         return self._fields[name]
 
     def set(self, name: str, value: Any) -> None:
@@ -68,9 +66,7 @@ class Tracks:
         if len(self._fields):
             assert (
                 len(self) == data_len
-            ), "Adding a field of length {} to a Tracks of length {}".format(
-                data_len, len(self)
-            )
+            ), f"Adding a field of length {data_len} to a Tracks of length {len(self)}"
         self._fields[name] = value
 
     def has(self, name: str) -> bool:
@@ -176,18 +172,14 @@ class Tracks:
             elif hasattr(type(v0), "cat"):
                 values = type(v0).cat(values)
             else:
-                raise ValueError(
-                    "Unsupported type {} for concatenation".format(type(v0))
-                )
+                raise ValueError(f"Unsupported type {type(v0)} for concatenation")
             ret.set(k, values)
         return ret
 
     def __str__(self) -> str:
         s = self.__class__.__name__ + "("
-        s += "num_instances={}, ".format(len(self))
-        s += "fields=[{}])".format(
-            ", ".join((f"{k}: {v}" for k, v in self._fields.items()))
-        )
+        s += f"num_instances={len(self)}, "
+        s += "fields=[{}])".format(", ".join((f"{k}: {v}" for k, v in self._fields.items())))
         return s
 
     __repr__ = __str__
