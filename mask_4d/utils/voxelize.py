@@ -10,9 +10,7 @@ def fnv_hash_vec(arr):
     # Floor first for negative coordinates
     arr = arr.copy()
     arr = arr.astype(np.uint64, copy=False)
-    hashed_arr = np.uint64(14695981039346656037) * np.ones(
-        arr.shape[0], dtype=np.uint64
-    )
+    hashed_arr = np.uint64(14695981039346656037) * np.ones(arr.shape[0], dtype=np.uint64)
     for j in range(arr.shape[1]):
         hashed_arr *= np.uint64(1099511628211)
         hashed_arr = np.bitwise_xor(hashed_arr, arr[:, j])
@@ -62,9 +60,7 @@ def voxelize(coord, voxel_size=0.05, hash_type="fnv", mode=0):
         return idx_unique, idx_recon
     else:  # val mode
         idx_start = np.cumsum(np.insert(count, 0, 0)[0:-1])
-        idx_select = (
-            idx_start  # + np.random.randint(0, count.max(), count.size) % count
-        )
+        idx_select = idx_start  # + np.random.randint(0, count.max(), count.size) % count
         # idx_unique = idx_sort[idx_select]
         sorted_idx = np.zeros(key.shape[0]).astype(int)
         sorted_idx[idx_start] = 1

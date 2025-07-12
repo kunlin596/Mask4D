@@ -14,9 +14,7 @@ class PanopticEval:
 
     """
 
-    def __init__(
-        self, n_classes, device=None, ignore=None, offset=2**32, min_points=30
-    ):
+    def __init__(self, n_classes, device=None, ignore=None, offset=2**32, min_points=30):
         self.n_classes = n_classes
         assert device == None
         self.ignore = np.array(ignore, dtype=np.int64)
@@ -29,9 +27,7 @@ class PanopticEval:
 
         self.reset()
         self.offset = offset  # largest number of instances in a given scan
-        self.min_points = (
-            min_points  # smallest number of points to consider instances in gt
-        )
+        self.min_points = min_points  # smallest number of points to consider instances in gt
         self.eps = 1e-15
 
     def num_classes(self):
@@ -49,9 +45,7 @@ class PanopticEval:
     def reset(self):
         # general things
         # iou stuff
-        self.px_iou_conf_matrix = np.zeros(
-            (self.n_classes, self.n_classes), dtype=np.int64
-        )
+        self.px_iou_conf_matrix = np.zeros((self.n_classes, self.n_classes), dtype=np.int64)
         # panoptic stuff
         self.pan_tp = np.zeros(self.n_classes, dtype=np.int64)
         self.pan_iou = np.zeros(self.n_classes, dtype=np.double)
@@ -93,8 +87,7 @@ class PanopticEval:
         union = np.maximum(union, self.eps)
         iou = intersection.astype(np.double) / union.astype(np.double)
         iou_mean = (
-            intersection[self.include].astype(np.double)
-            / union[self.include].astype(np.double)
+            intersection[self.include].astype(np.double) / union[self.include].astype(np.double)
         ).mean()
 
         return iou_mean, iou  # returns "iou mean", "iou per class" ALL CLASSES
@@ -140,26 +133,20 @@ class PanopticEval:
             y_inst_in_cl = y_inst_row * y_inst_in_cl_mask.astype(np.int64)
 
             # generate the areas for each unique instance prediction
-            unique_pred, counts_pred = np.unique(
-                x_inst_in_cl[x_inst_in_cl > 0], return_counts=True
-            )
+            unique_pred, counts_pred = np.unique(x_inst_in_cl[x_inst_in_cl > 0], return_counts=True)
             id2idx_pred = {id: idx for idx, id in enumerate(unique_pred)}
             matched_pred = np.array([False] * unique_pred.shape[0])
             # print("Unique predictions:", unique_pred)
 
             # generate the areas for each unique instance gt_np
-            unique_gt, counts_gt = np.unique(
-                y_inst_in_cl[y_inst_in_cl > 0], return_counts=True
-            )
+            unique_gt, counts_gt = np.unique(y_inst_in_cl[y_inst_in_cl > 0], return_counts=True)
             id2idx_gt = {id: idx for idx, id in enumerate(unique_gt)}
             matched_gt = np.array([False] * unique_gt.shape[0])
             # print("Unique ground truth:", unique_gt)
 
             # generate intersection using offset
             valid_combos = np.logical_and(x_inst_in_cl > 0, y_inst_in_cl > 0)
-            offset_combo = (
-                x_inst_in_cl[valid_combos] + self.offset * y_inst_in_cl[valid_combos]
-            )
+            offset_combo = x_inst_in_cl[valid_combos] + self.offset * y_inst_in_cl[valid_combos]
             unique_combo, counts_combo = np.unique(offset_combo, return_counts=True)
 
             # generate an intersection map
@@ -220,9 +207,7 @@ class PanopticEval:
         # now do the panoptic stuff
         self.addBatchPanoptic(x_sem, x_inst, y_sem, y_inst)
 
-    def addBatch_w_fname(
-        self, x_sem, x_inst, y_sem, y_inst, fname
-    ):  # x=preds, y=targets
+    def addBatch_w_fname(self, x_sem, x_inst, y_sem, y_inst, fname):  # x=preds, y=targets
         """IMPORTANT: Inputs must be batched. Either [N,H,W], or [N, P]"""
         # add to IoU calculation (for checking purposes)
         self.addBatchSemIoU(x_sem, y_sem)
@@ -240,9 +225,7 @@ class Panoptic4DEval:
 
     """
 
-    def __init__(
-        self, n_classes, device=None, ignore=None, offset=2**32, min_points=30
-    ):
+    def __init__(self, n_classes, device=None, ignore=None, offset=2**32, min_points=30):
         self.n_classes = n_classes
         # assert (device == None)
         self.ignore = np.array(ignore, dtype=np.int64)
@@ -254,9 +237,7 @@ class Panoptic4DEval:
 
         self.reset()
         self.offset = offset  # largest number of instances in a given scan
-        self.min_points = (
-            min_points  # smallest number of points to consider instances in gt
-        )
+        self.min_points = min_points  # smallest number of points to consider instances in gt
         self.eps = 1e-15
 
     def num_classes(self):
@@ -265,9 +246,7 @@ class Panoptic4DEval:
     def reset(self):
         # general things
         # iou stuff
-        self.px_iou_conf_matrix = np.zeros(
-            (self.n_classes, self.n_classes), dtype=np.int64
-        )
+        self.px_iou_conf_matrix = np.zeros((self.n_classes, self.n_classes), dtype=np.int64)
 
         self.sequences = []
         self.preds = {}
@@ -382,9 +361,7 @@ class Panoptic4DEval:
             y_inst_in_cl = y_inst_row * y_inst_in_cl_mask.astype(np.int64)
 
             # generate the areas for each unique instance gt_np (i.e., set2)
-            unique_gt, counts_gt = np.unique(
-                y_inst_in_cl[y_inst_in_cl > 0], return_counts=True
-            )
+            unique_gt, counts_gt = np.unique(y_inst_in_cl[y_inst_in_cl > 0], return_counts=True)
             self.update_dict_stat(
                 cl_gts,
                 unique_gt[counts_gt > self.min_points],
@@ -401,9 +378,7 @@ class Panoptic4DEval:
 
             y_inst_in_cl = y_inst_in_cl * valid_combos_min_point
             # generate the areas for each unique instance prediction (i.e., set1)
-            unique_pred, counts_pred = np.unique(
-                x_inst_in_cl[x_inst_in_cl > 0], return_counts=True
-            )
+            unique_pred, counts_pred = np.unique(x_inst_in_cl[x_inst_in_cl > 0], return_counts=True)
 
             # is there better way to do this?
             self.update_dict_stat(cl_preds, unique_pred, counts_pred)
@@ -413,9 +388,7 @@ class Panoptic4DEval:
             )  # Convert to boolean and do logical and, based on semantics
 
             # generate intersection using offset
-            offset_combo = (
-                x_inst_row[valid_combos] + self.offset * y_inst_in_cl[valid_combos]
-            )
+            offset_combo = x_inst_row[valid_combos] + self.offset * y_inst_in_cl[valid_combos]
             unique_combo, counts_combo = np.unique(offset_combo, return_counts=True)
 
             self.update_dict_stat(cl_intersects, unique_combo, counts_combo)
@@ -443,15 +416,11 @@ class Panoptic4DEval:
                             )  # TODO I dont think these can ever be zero, but double check
                             Recall = TPA / float(gt_size)
                             TPA_ovr = self.intersects[seq][cl][TPA_key]
-                            inner_sum_iou += TPA_ovr * (
-                                TPA_ovr / (gt_size + pr_size - TPA_ovr)
-                            )
+                            inner_sum_iou += TPA_ovr * (TPA_ovr / (gt_size + pr_size - TPA_ovr))
                             if Prec > 1.0 or Recall > 1.0:
                                 print("something wrong !!")
                     outer_sum_iou += 1.0 / float(gt_size) * float(inner_sum_iou)
-                self.pan_aq[
-                    cl
-                ] += outer_sum_iou  # 1.0/float(len(cl_gts)) # Normalize by #tubes
+                self.pan_aq[cl] += outer_sum_iou  # 1.0/float(len(cl_gts)) # Normalize by #tubes
                 self.pan_aq_ovr += outer_sum_iou
         # ==========
 
@@ -602,11 +571,11 @@ if __name__ == "__main__":
     # SQ: 0.5520833333333333
     # RQ: 0.6666666666666666
     # IoU: 0.5476190476190476
-    # Class ignore 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
-    # Class grass 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class sky 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class person 	 PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
-    # Class dog 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class ignore   PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class grass    PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class sky      PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class person   PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
+    # Class dog      PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
 
     print("TOTALS")
     print("PQ:", pq.item(), pq.item() == 0.47916666666666663)
@@ -638,11 +607,11 @@ if __name__ == "__main__":
     # SQ: 0.5520833333333333
     # RQ: 0.6666666666666666
     # IoU: 0.5476190476190476
-    # Class ignore 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
-    # Class grass 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class sky 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class person 	 PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
-    # Class dog 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class ignore   PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class grass    PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class sky      PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class person   PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
+    # Class dog      PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
 
     print("TOTALS")
     print("PQ:", pq.item(), pq.item() == 0.47916666666666663)
@@ -674,11 +643,11 @@ if __name__ == "__main__":
     # SQ: 0.5520833333333333
     # RQ: 0.6666666666666666
     # IoU: 0.5476190476190476
-    # Class ignore 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
-    # Class grass 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class sky 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class person 	 PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
-    # Class dog 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class ignore   PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class grass    PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class sky      PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class person   PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
+    # Class dog      PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
 
     print("TOTALS")
     print("PQ:", pq.item(), pq.item() == 0.47916666666666663)
@@ -719,11 +688,11 @@ if __name__ == "__main__":
     # SQ: 0.5520833333333333
     # RQ: 0.6666666666666666
     # IoU: 0.5476190476190476
-    # Class ignore 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
-    # Class grass 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class sky 	 PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
-    # Class person 	 PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
-    # Class dog 	 PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class ignore   PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
+    # Class grass    PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class sky      PQ: 0.6666666666666666 SQ: 0.6666666666666666 RQ: 1.0 IoU: 0.6666666666666666
+    # Class person   PQ: 0.5833333333333333 SQ: 0.875 RQ: 0.6666666666666666 IoU: 0.8571428571428571
+    # Class dog      PQ: 0.0 SQ: 0.0 RQ: 0.0 IoU: 0.0
 
     print("TOTALS")
     print("PQ:", pq.item(), pq.item() == 0.47916666666666663)

@@ -6,26 +6,21 @@ import click
 import torch
 import yaml
 from easydict import EasyDict as edict
-from mask_4d.datasets.kitti_dataset import SemanticDatasetModule
-from mask_4d.models.mask_model import Mask4D
 from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+
+from mask_4d.datasets.kitti_dataset import SemanticDatasetModule
+from mask_4d.models.mask_model import Mask4D
 
 
 @click.command()
 @click.option("--w", type=str, default=None, required=False)
 @click.option("--ckpt", type=str, default=None, required=False)
 def main(w, ckpt):
-    model_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/model.yaml")))
-    )
-    backbone_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/backbone.yaml")))
-    )
-    decoder_cfg = edict(
-        yaml.safe_load(open(join(getDir(__file__), "../config/decoder.yaml")))
-    )
+    model_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/model.yaml"))))
+    backbone_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/backbone.yaml"))))
+    decoder_cfg = edict(yaml.safe_load(open(join(getDir(__file__), "../config/decoder.yaml"))))
     cfg = edict({**model_cfg, **backbone_cfg, **decoder_cfg})
 
     data = SemanticDatasetModule(cfg)

@@ -12,9 +12,7 @@ class PositionAttention(nn.Module):
         super().__init__()
         self.num_heads = num_heads
         self.attention = DotProductAttention(dropout)
-        self.in_proj_weight = nn.parameter.Parameter(
-            torch.empty(3 * num_hiddens, num_hiddens)
-        )
+        self.in_proj_weight = nn.parameter.Parameter(torch.empty(3 * num_hiddens, num_hiddens))
         self.in_proj_bias = nn.parameter.Parameter(torch.empty(3 * num_hiddens))
         self.out_proj = nn.Linear(num_hiddens, num_hiddens, bias=bias)
         self.hd = num_hiddens
@@ -23,9 +21,7 @@ class PositionAttention(nn.Module):
         if key_padding_mask:
             attn_mask = attn_mask + key_padding_mask
         queries = self.transpose_qkv(
-            F.linear(
-                query, self.in_proj_weight[: self.hd, :], self.in_proj_bias[: self.hd]
-            )
+            F.linear(query, self.in_proj_weight[: self.hd, :], self.in_proj_bias[: self.hd])
         )
         keys = self.transpose_qkv(
             F.linear(

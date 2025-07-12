@@ -135,20 +135,12 @@ def batch_sigmoid_ce_cost(inputs: torch.Tensor, targets: torch.Tensor):
     """
     hw = inputs.shape[1]
 
-    pos = F.binary_cross_entropy_with_logits(
-        inputs, torch.ones_like(inputs), reduction="none"
-    )
-    neg = F.binary_cross_entropy_with_logits(
-        inputs, torch.zeros_like(inputs), reduction="none"
-    )
+    pos = F.binary_cross_entropy_with_logits(inputs, torch.ones_like(inputs), reduction="none")
+    neg = F.binary_cross_entropy_with_logits(inputs, torch.zeros_like(inputs), reduction="none")
 
-    loss = torch.einsum("nc,mc->nm", pos, targets) + torch.einsum(
-        "nc,mc->nm", neg, (1 - targets)
-    )
+    loss = torch.einsum("nc,mc->nm", pos, targets) + torch.einsum("nc,mc->nm", neg, (1 - targets))
 
     return loss / hw
 
 
-batch_sigmoid_ce_cost_jit = torch.jit.script(
-    batch_sigmoid_ce_cost
-)  # type: torch.jit.ScriptModule
+batch_sigmoid_ce_cost_jit = torch.jit.script(batch_sigmoid_ce_cost)  # type: torch.jit.ScriptModule

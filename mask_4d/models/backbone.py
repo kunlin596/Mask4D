@@ -7,10 +7,11 @@ import spconv.pytorch as spconv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mask_4d.models.spherical_transformer import SphereFormer
 from spconv.core import ConvAlgo
 from spconv.pytorch.modules import SparseModule
 from torch_scatter import scatter_mean
+
+from mask_4d.models.spherical_transformer import SphereFormer
 
 
 class ResidualBlock(SparseModule):
@@ -50,9 +51,7 @@ class ResidualBlock(SparseModule):
             input.features, input.indices, input.spatial_shape, input.batch_size
         )
         output = self.conv_branch(input)
-        output = output.replace_feature(
-            output.features + self.i_branch(identity).features
-        )
+        output = output.replace_feature(output.features + self.i_branch(identity).features)
         return output
 
 
@@ -98,11 +97,11 @@ class UBlock(nn.Module):
         self.sphere_layers = sphere_layers
 
         blocks = {
-            "block{}".format(i): block(
+            f"block{i}": block(
                 nPlanes[0],
                 nPlanes[0],
                 norm_fn,
-                indice_key="subm{}".format(indice_key_id),
+                indice_key=f"subm{indice_key_id}",
             )
             for i in range(block_reps)
         }
@@ -120,7 +119,7 @@ class UBlock(nn.Module):
                 window_size_sphere,
                 quant_size,
                 quant_size_sphere,
-                indice_key="sphereformer{}".format(indice_key_id),
+                indice_key=f"sphereformer{indice_key_id}",
                 rel_query=rel_query,
                 rel_key=rel_key,
                 rel_value=rel_value,
@@ -138,7 +137,7 @@ class UBlock(nn.Module):
                     kernel_size=2,
                     stride=2,
                     bias=False,
-                    indice_key="spconv{}".format(indice_key_id),
+                    indice_key=f"spconv{indice_key_id}",
                     algo=ConvAlgo.Native,
                 ),
             )
@@ -200,18 +199,18 @@ class UBlock(nn.Module):
                     nPlanes[0],
                     kernel_size=2,
                     bias=False,
-                    indice_key="spconv{}".format(indice_key_id),
+                    indice_key=f"spconv{indice_key_id}",
                     algo=ConvAlgo.Native,
                 ),
             )
 
             blocks_tail = {}
             for i in range(block_reps):
-                blocks_tail["block{}".format(i)] = block(
+                blocks_tail[f"block{i}"] = block(
                     nPlanes[0] * (2 - i),
                     nPlanes[0],
                     norm_fn,
-                    indice_key="subm{}".format(indice_key_id),
+                    indice_key=f"subm{indice_key_id}",
                 )
             blocks_tail = OrderedDict(blocks_tail)
             self.blocks_tail = spconv.SparseSequential(blocks_tail)
@@ -232,9 +231,7 @@ class UBlock(nn.Module):
                     run, output.features, xyz, batch
                 )
             else:
-                transformer_features = self.transformer_block(
-                    output.features, xyz, batch
-                )
+                transformer_features = self.transformer_block(output.features, xyz, batch)
             output = output.replace_feature(transformer_features)
 
         identity = spconv.SparseConvTensor(
@@ -245,9 +242,7 @@ class UBlock(nn.Module):
             output_decoder = self.conv(output)
 
             # downsample
-            indice_pairs = output_decoder.indice_dict[
-                "spconv{}".format(self.indice_key_id)
-            ].indice_pairs
+            indice_pairs = output_decoder.indice_dict[f"spconv{self.indice_key_id}"].indice_pairs
             xyz_next, batch_next = get_downsample_info(xyz, batch, indice_pairs)
 
             output_decoder = self.u(output_decoder, xyz_next, batch_next.long())
@@ -289,9 +284,7 @@ class SphericalEncoderDecoder(nn.Module):
 
         #### backbone
         self.input_conv = spconv.SparseSequential(
-            spconv.SubMConv3d(
-                input_c, m, kernel_size=3, padding=1, bias=False, indice_key="subm1"
-            )
+            spconv.SubMConv3d(input_c, m, kernel_size=3, padding=1, bias=False, indice_key="subm1")
         )
 
         self.unet = UBlock(
@@ -333,26 +326,18 @@ class SphericalEncoderDecoder(nn.Module):
         xyz = torch.cat(x["sp_xyz"])
         feat = torch.cat(x["sp_feat"])
         idx_recon = x["sp_idx_recons"]
-        _coord = np.insert(
-            np.cumsum(np.array([cc.shape[0] for cc in x["sp_coord"]])), 0, 0
-        )[:-1]
+        _coord = np.insert(np.cumsum(np.array([cc.shape[0] for cc in x["sp_coord"]])), 0, 0)[:-1]
         # remap idx_recon to stack tensor
         idx_recon = torch.cat([ii + cc for ii, cc in zip(idx_recon, _coord)])
 
         offset_ = [cc.shape[0] for cc in x["sp_coord"]]
-        batch = (
-            torch.cat([torch.tensor([ii] * o) for ii, o in enumerate(offset_)], 0)
-            .long()
-            .cuda()
-        )
+        batch = torch.cat([torch.tensor([ii] * o) for ii, o in enumerate(offset_)], 0).long().cuda()
 
         coord = torch.cat([batch.unsqueeze(-1), coord], -1)
         coord[:, 1:] += (torch.rand(3) * 2).type_as(coord)
         spatial_shape = np.clip((coord.max(0)[0][1:] + 1).cpu().numpy(), 128, None)
 
-        sinput = spconv.SparseConvTensor(
-            feat, coord.int(), spatial_shape, len(x["pt_coord"])
-        )
+        sinput = spconv.SparseConvTensor(feat, coord.int(), spatial_shape, len(x["pt_coord"]))
 
         output0 = self.input_conv(sinput)
         output1 = self.unet(output0, xyz, batch)
@@ -362,7 +347,5 @@ class SphericalEncoderDecoder(nn.Module):
 
         coors = torch.from_numpy(x["pt_coord"][0]).to(pt_feat.device).unsqueeze(0)
         logits = self.linear(pt_feat)
-        logits = torch.hstack(
-            (torch.zeros(logits.shape[0]).unsqueeze(1).cuda(), logits)
-        )
+        logits = torch.hstack((torch.zeros(logits.shape[0]).unsqueeze(1).cuda(), logits))
         return pt_feat, coors, logits

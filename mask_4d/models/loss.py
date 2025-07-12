@@ -4,9 +4,10 @@ from itertools import filterfalse
 
 import torch
 import torch.nn.functional as F
-from mask_4d.utils.misc import pad_stack
 from torch import nn
 from torch.autograd import Variable
+
+from mask_4d.utils.misc import pad_stack
 
 
 class MaskLoss(nn.Module):
@@ -29,8 +30,7 @@ class MaskLoss(nn.Module):
         self.ignore = data_cfg.IGNORE_LABEL
 
         self.weight_dict = {
-            cfg.LOSS_WEIGHTS_KEYS[i]: cfg.LOSS_WEIGHTS[i]
-            for i in range(len(cfg.LOSS_WEIGHTS))
+            cfg.LOSS_WEIGHTS_KEYS[i]: cfg.LOSS_WEIGHTS[i] for i in range(len(cfg.LOSS_WEIGHTS))
         }
 
         self.eos_coef = cfg.EOS_COEF
@@ -45,9 +45,7 @@ class MaskLoss(nn.Module):
     def forward(self, outputs, targets):
         pass
 
-    def get_losses(
-        self, outputs, targets, indices, num_masks, step="detect", skip=None
-    ):
+    def get_losses(self, outputs, targets, indices, num_masks, step="detect", skip=None):
         classes = self.loss_classes(outputs, targets, indices, step, skip=skip)
         masks = self.loss_masks(outputs, targets, indices, num_masks, step)
         classes.update(masks)
@@ -62,9 +60,9 @@ class MaskLoss(nn.Module):
 
         idx = self._get_pred_permutation_idx(indices)
 
-        target_classes_o = torch.cat(
-            [t[J] for t, (_, J) in zip(targets["classes"], indices)]
-        ).to(pred_logits.device)
+        target_classes_o = torch.cat([t[J] for t, (_, J) in zip(targets["classes"], indices)]).to(
+            pred_logits.device
+        )
 
         target_classes = torch.full(
             pred_logits.shape[:2],
@@ -129,17 +127,13 @@ class MaskLoss(nn.Module):
 
     def _get_pred_permutation_idx(self, indices):
         # permute predictions following indices
-        batch_idx = torch.cat(
-            [torch.full_like(src, i) for i, (src, _) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
 
     def _get_tgt_permutation_idx(self, indices, n_masks):
         # permute targets following indices
-        batch_idx = torch.cat(
-            [torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)])
         tgt_idx = torch.cat([tgt for (_, tgt) in indices])
         # From [B,id] to [id] of stacked masks
         cont_id = torch.cat(
@@ -265,9 +259,7 @@ class SemLoss(nn.Module):
             errors_sorted, perm = torch.sort(errors, 0, descending=True)
             perm = perm.data
             fg_sorted = fg[perm]
-            losses.append(
-                torch.dot(errors_sorted, Variable(self.lovasz_grad(fg_sorted)))
-            )
+            losses.append(torch.dot(errors_sorted, Variable(self.lovasz_grad(fg_sorted))))
         return self.mean(losses)
 
     def flatten_probas(self, probas, labels, ignore=None):
@@ -316,8 +308,7 @@ class WrongLoss(nn.Module):
         """
         super().__init__()
         self.weight_dict = {
-            cfg.LOSS_WEIGHTS_KEYS[i]: cfg.LOSS_WEIGHTS[i]
-            for i in range(len(cfg.LOSS_WEIGHTS))
+            cfg.LOSS_WEIGHTS_KEYS[i]: cfg.LOSS_WEIGHTS[i] for i in range(len(cfg.LOSS_WEIGHTS))
         }
 
     def forward(self, track_ins, pred_idx, tgt_idx, targets, outputs, scan_i):
@@ -359,9 +350,7 @@ class WrongLoss(nn.Module):
         if tr_wrong_match.sum() > 1:
             tr_wrong_pred_mask = outputs["pred_masks"][0][:, pred_idx[tr_wrong_match]]
             tr_wrong_tgt_mask = targets["masks"][0][tgt_idx[tr_wrong_match]]
-            loss_wrong_mask = self.get_loss(
-                tr_wrong_pred_mask, tr_wrong_tgt_mask, str(scan_i)
-            )
+            loss_wrong_mask = self.get_loss(tr_wrong_pred_mask, tr_wrong_tgt_mask, str(scan_i))
             losses.update(loss_wrong_mask)
         return losses, idx_delete, skip
 
@@ -417,9 +406,7 @@ def wrong_dice_loss(inputs: torch.Tensor, targets: torch.Tensor, mask: torch.Ten
 wrong_dice_loss_jit = torch.jit.script(wrong_dice_loss)  # type: torch.jit.ScriptModule
 
 
-def wrong_sigmoid_ce_loss(
-    inputs: torch.Tensor, targets: torch.Tensor, mask: torch.Tensor
-):
+def wrong_sigmoid_ce_loss(inputs: torch.Tensor, targets: torch.Tensor, mask: torch.Tensor):
     """
     Args:
         inputs: A float tensor of arbitrary shape.
@@ -438,6 +425,4 @@ def wrong_sigmoid_ce_loss(
     return loss
 
 
-wrong_sigmoid_ce_loss_jit = torch.jit.script(
-    wrong_sigmoid_ce_loss
-)  # type: torch.jit.ScriptModule
+wrong_sigmoid_ce_loss_jit = torch.jit.script(wrong_sigmoid_ce_loss)  # type: torch.jit.ScriptModule

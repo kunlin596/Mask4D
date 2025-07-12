@@ -1,9 +1,11 @@
-import mask_4d.utils.misc as misc
-import mask_4d.utils.testing as testing
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from pytorch_lightning.core.lightning import LightningModule
+
+import mask_4d.utils.misc as misc
+import mask_4d.utils.testing as testing
 from mask_4d.models.backbone import SphericalEncoderDecoder
 from mask_4d.models.decoder import MaskedTransformerDecoder
 from mask_4d.models.loss import MaskLoss, SemLoss, WrongLoss
@@ -13,7 +15,6 @@ from mask_4d.utils.evaluate_4dpanoptic import PanopticKitti4DEvaluator
 from mask_4d.utils.evaluate_panoptic import PanopticKittiEvaluator
 from mask_4d.utils.instances import Tracks
 from mask_4d.utils.kalman_filter import KalmanBoxTracker
-from pytorch_lightning.core.lightning import LightningModule
 
 
 class Mask4D(LightningModule):
@@ -24,9 +25,7 @@ class Mask4D(LightningModule):
         self.n_q = hparams.DECODER.NUM_QUERIES
 
         self.backbone = SphericalEncoderDecoder(hparams.BACKBONE, hparams.KITTI)
-        self.decoder = MaskedTransformerDecoder(
-            hparams.DECODER, hparams.BACKBONE, hparams.KITTI
-        )
+        self.decoder = MaskedTransformerDecoder(hparams.DECODER, hparams.BACKBONE, hparams.KITTI)
 
         self.mask_loss = MaskLoss(hparams.LOSS, hparams.KITTI)
         self.wrong_loss = WrongLoss(hparams.LOSS, hparams.KITTI)
@@ -35,15 +34,9 @@ class Mask4D(LightningModule):
         self.evaluator = PanopticKittiEvaluator(hparams.KITTI)
         self.evaluator4d = PanopticKitti4DEvaluator(hparams.KITTI)
 
-        self.matcher = HungarianMatcher(
-            hparams.LOSS.LOSS_WEIGHTS, hparams.LOSS.NUM_POINTS
-        )
-        self.query_feat = nn.Embedding(
-            self.n_q, hparams.DECODER.HIDDEN_DIM, device="cuda"
-        )
-        self.query_embed = nn.Embedding(
-            self.n_q, hparams.DECODER.HIDDEN_DIM, device="cuda"
-        )
+        self.matcher = HungarianMatcher(hparams.LOSS.LOSS_WEIGHTS, hparams.LOSS.NUM_POINTS)
+        self.query_feat = nn.Embedding(self.n_q, hparams.DECODER.HIDDEN_DIM, device="cuda")
+        self.query_embed = nn.Embedding(self.n_q, hparams.DECODER.HIDDEN_DIM, device="cuda")
         self.track_ins = self.init_tracks()
         self.last_ins_id = 1
         self.last_pose = np.eye(4)
@@ -68,15 +61,9 @@ class Mask4D(LightningModule):
                 "id": [scan["masks_ids"][0]],
             }
             matched_ins = []
-            if (
-                s_i != 0
-                and len(track_ins) > self.n_q
-                and (targets["id"][0] != 0).sum() > 0
-            ):
+            if s_i != 0 and len(track_ins) > self.n_q and (targets["id"][0] != 0).sum() > 0:
                 # Associate detections with previously tracked instances
-                track_loss, matched_ins = self.tracking_step(
-                    outputs, targets, track_ins, s_i
-                )
+                track_loss, matched_ins = self.tracking_step(outputs, targets, track_ins, s_i)
                 losses.update(track_loss)
 
             # Detect stuff and new instances
@@ -328,9 +315,7 @@ class Mask4D(LightningModule):
         return pred_idx, tgt_idx, losses
 
     def tracking_step(self, outputs, targets, track_ins, scan_i):
-        matched_ins, matched_outputs, matched_tgt = self.fixed_match(
-            track_ins, outputs, targets
-        )
+        matched_ins, matched_outputs, matched_tgt = self.fixed_match(track_ins, outputs, targets)
 
         track_loss = {}
         if len(matched_ins) > 0:
@@ -411,9 +396,7 @@ class Mask4D(LightningModule):
             self.trackers[tr].predict()
         for j in range(len(self.track_ins.center[self.n_q :])):
             id = self.track_ins.id[self.n_q + j].item()
-            pred_center = torch.from_numpy(
-                self.trackers[id].get_state()[:3][None, :]
-            ).cuda()
+            pred_center = torch.from_numpy(self.trackers[id].get_state()[:3][None, :]).cuda()
             # transform from global to current frame
             local_center = misc.apply_pose(pred_center, inv_p1)[0]
             self.track_ins.center[self.n_q + j] = local_center
@@ -437,9 +420,7 @@ class Mask4D(LightningModule):
                 len(indices[0][0]),
                 "_detect_" + str(scan_i),
             )
-            l_dict = {
-                f"{aux_i}_" + k: self.cfg.LOSS.DET_W_AUX * v for k, v in l_dict.items()
-            }
+            l_dict = {f"{aux_i}_" + k: self.cfg.LOSS.DET_W_AUX * v for k, v in l_dict.items()}
             all_losses.update(l_dict)
         return all_losses
 

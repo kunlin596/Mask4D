@@ -4,9 +4,10 @@ import random
 import numpy as np
 import torch
 import yaml
-from mask_4d.utils.data_util import data_prepare
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
+
+from mask_4d.utils.data_util import data_prepare
 
 
 class SemanticDatasetModule(LightningDataModule):
@@ -125,7 +126,7 @@ class SemanticDatasetModule(LightningDataModule):
 class SemanticDataset(Dataset):
     def __init__(self, data_path, cfg_path, split="train"):
         yaml_path = cfg_path
-        with open(yaml_path, "r") as stream:
+        with open(yaml_path) as stream:
             semyaml = yaml.safe_load(stream)
 
         self.things = get_things()
@@ -149,14 +150,10 @@ class SemanticDataset(Dataset):
                 "/".join([data_path, str(i_folder).zfill(fill), "velodyne"])
             )
             pose_files.append(
-                absoluteDirPath(
-                    "/".join([data_path, str(i_folder).zfill(fill), "poses.txt"])
-                )
+                absoluteDirPath("/".join([data_path, str(i_folder).zfill(fill), "poses.txt"]))
             )
             calib_files.append(
-                absoluteDirPath(
-                    "/".join([data_path, str(i_folder).zfill(fill), "calib.txt"])
-                )
+                absoluteDirPath("/".join([data_path, str(i_folder).zfill(fill), "calib.txt"]))
             )
 
         self.im_idx.sort()
@@ -174,9 +171,7 @@ class SemanticDataset(Dataset):
         if len(intensity.shape) == 2:
             intensity = np.squeeze(intensity)
         if self.split == "test":
-            annotated_data = np.expand_dims(
-                np.zeros_like(points[:, 0], dtype=int), axis=1
-            )
+            annotated_data = np.expand_dims(np.zeros_like(points[:, 0], dtype=int), axis=1)
             sem_labels = annotated_data
             ins_labels = annotated_data
         else:
@@ -280,17 +275,13 @@ class MaskSemanticDataset(Dataset):
         things_cls = np.array([], dtype=int)
         things_masks_ids = []
 
-        stuff_labels = np.asarray(
-            [0 if s in self.th_ids else s for s in sem_labels[:, 0]]
-        )
+        stuff_labels = np.asarray([0 if s in self.th_ids else s for s in sem_labels[:, 0]])
         stuff_cls, st_cnt = np.unique(stuff_labels, return_counts=True)
         # filter small masks
         keep_st = np.argwhere(st_cnt > self.min_points)[:, 0]
         stuff_cls = stuff_cls[keep_st][1:]
         if len(stuff_cls):
-            stuff_masks = np.array(
-                [np.where(stuff_labels == i, 1.0, 0.0) for i in stuff_cls]
-            )
+            stuff_masks = np.array([np.where(stuff_labels == i, 1.0, 0.0) for i in stuff_cls])
             stuff_masks_ids = [0 for m in stuff_masks]
         # things masks
         ins_sems = np.where(ins_labels == 0, 0, sem_labels)
