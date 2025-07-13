@@ -6,7 +6,6 @@ import numpy as np
 import spconv.pytorch as spconv
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from spconv.core import ConvAlgo
 from spconv.pytorch.modules import SparseModule
 from torch_scatter import scatter_mean
@@ -79,14 +78,14 @@ class UBlock(nn.Module):
         quant_size,
         quant_size_sphere,
         head_dim=16,
-        window_size_scale=[2.0, 2.0],
+        window_size_scale=(2.0, 2.0),
         rel_query=True,
         rel_key=True,
         rel_value=True,
         drop_path=0.0,
         indice_key_id=1,
-        grad_checkpoint_layers=[],
-        sphere_layers=[1, 2, 3, 4, 5],
+        grad_checkpoint_layers=(),
+        sphere_layers=(1, 2, 3, 4, 5),
         a=0.05 * 0.25,
     ):
         super().__init__()
@@ -282,9 +281,16 @@ class SphericalEncoderDecoder(nn.Module):
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, 7)]
 
-        #### backbone
+        # backbone
         self.input_conv = spconv.SparseSequential(
-            spconv.SubMConv3d(input_c, m, kernel_size=3, padding=1, bias=False, indice_key="subm1")
+            spconv.SubMConv3d(
+                input_c,
+                m,
+                kernel_size=3,
+                padding=1,
+                bias=False,
+                indice_key="subm1",
+            )
         )
 
         self.unet = UBlock(
@@ -309,7 +315,7 @@ class SphericalEncoderDecoder(nn.Module):
 
         self.output_layer = spconv.SparseSequential(norm_fn(m), nn.ReLU())
 
-        #### semantic segmentation
+        # semantic segmentation
         self.linear = nn.Linear(m, classes - 1)  # bias(default): True
 
         self.apply(self.set_bn_init)

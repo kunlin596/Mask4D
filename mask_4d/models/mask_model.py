@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning import LightningModule
 
 import mask_4d.utils.misc as misc
 import mask_4d.utils.testing as testing
@@ -10,7 +10,8 @@ from mask_4d.models.backbone import SphericalEncoderDecoder
 from mask_4d.models.decoder import MaskedTransformerDecoder
 from mask_4d.models.loss import MaskLoss, SemLoss, WrongLoss
 from mask_4d.models.matcher import HungarianMatcher
-from mask_4d.models.positional_encoder import PositionalEncoder
+
+# from mask_4d.models.positional_encoder import PositionalEncoder
 from mask_4d.utils.evaluate_4dpanoptic import PanopticKitti4DEvaluator
 from mask_4d.utils.evaluate_panoptic import PanopticKittiEvaluator
 from mask_4d.utils.instances import Tracks
@@ -96,9 +97,9 @@ class Mask4D(LightningModule):
                 loss_track += v
             if "wrong" in k:
                 loss_wrong += v
-        self.log(f"losses/detect", loss_detect, batch_size=self.cfg.TRAIN.BATCH_SIZE)
-        self.log(f"losses/track", loss_track, batch_size=self.cfg.TRAIN.BATCH_SIZE)
-        self.log(f"losses/wrong", loss_wrong, batch_size=self.cfg.TRAIN.BATCH_SIZE)
+        self.log("losses/detect", loss_detect, batch_size=self.cfg.TRAIN.BATCH_SIZE)
+        self.log("losses/track", loss_track, batch_size=self.cfg.TRAIN.BATCH_SIZE)
+        self.log("losses/wrong", loss_wrong, batch_size=self.cfg.TRAIN.BATCH_SIZE)
 
         total_loss = sum(losses.values())
         self.log("train_loss", total_loss, batch_size=self.cfg.TRAIN.BATCH_SIZE)
@@ -112,7 +113,8 @@ class Mask4D(LightningModule):
         self.evaluator.update(sem_pred, ins_pred, x)
         self.evaluator4d.update(sem_pred, ins_pred, x)
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
+        # outputs = self.validation_step_outputs
         self.log(
             "metrics/pq",
             self.evaluator.get_mean_pq(),
@@ -144,7 +146,7 @@ class Mask4D(LightningModule):
         self.last_ins_id = 1
         self.track_ins = self.init_tracks()
 
-        if not "EVALUATE" in self.cfg:
+        if "EVALUATE" not in self.cfg:
             self.evaluator.reset()
             self.evaluator4d.reset()
 
