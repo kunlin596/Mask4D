@@ -1,3 +1,3 @@
 [submodule "SparseTransformer"]
     path = SparseTransformer
-    url = https://github.com/dvlab-research/SparseTransformer.git
+    url = https://github.com/kunlin596/SparseTransformer.git
