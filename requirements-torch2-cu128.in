@@ -1,0 +1,28 @@
+--index-url https://download.pytorch.org/whl/nightly/cu128
+--extra-index-url https://download.pytorch.org/whl/nightly  # For torchvision, etc.
+# --find-links https://data.pyg.org/whl/torch-2.7.0+cu128.html
+--extra-index-url https://pypi.org/simple
+
+setuptools
+click
+easydict
+filterpy
+numpy
+PyYAML
+scipy
+timm
+
+# CUDA and PyTorch dependencies
+torch==2.9.0.dev20250712+cu128
+torchaudio==2.8.0.dev20250712+cu128
+torchvision==0.24.0.dev20250712+cu128
+
+# PyTorch Geometric dependencies.
+torch-sparse  # For torch_geometric
+torch_geometric
+torch_scatter
+torch-cluster
+
+# Additional dependencies
+lightning[extra]
+spconv-cu126

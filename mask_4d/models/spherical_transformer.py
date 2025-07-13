@@ -251,11 +251,6 @@ class SparseMultiheadSASphereConcat(nn.Module):
             ), "window_size and shift_win must be the same for sptr_tensors with the same indice_key: {}".format(
                 self.indice_key
             )
-            assert (
-                window_size_sphere == self.window_size_sphere
-            ), "window_size and shift_win must be the same for sptr_tensors with the same indice_key: {}".format(
-                self.indice_key
-            )
 
         kwargs = {
             "query": query[:, : self.num_heads_brc1].contiguous().float(),
@@ -318,7 +313,7 @@ class SparseMultiheadSASphereConcat(nn.Module):
             )
         out2 = sparse_self_attention(**kwargs)
 
-        x = torch.cat([out1, out2], 1).view(N, C)
+        x = torch.cat([out1, out2], axis=1).view(N, C)
 
         x = self.proj(x)
         x = self.proj_drop(x)  # [N, C]

@@ -16,20 +16,19 @@ This is the official implementation of [Mask4D](https://www.ipb.uni-bonn.de/wp-c
 Install this package by running in the root directory of this repo:
 
 ```shell
-uv venv
-source .venv/bin/activate
-python -m ensurepip
-pip install torch==1.12.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
-pip install -r requirements_lock.txt --no-build-isolation
-pip install -e SparseTransformer
-pip install -e .
+source ~/.venv/bin/activate
+uv pip install -r requirements-torch2-cu128.lock --index-strategy unsafe-best-match -v
+cd SparseTransformer
+uv pip install --python `which python` . -v --no-build-isolation
+cd ..
+uv pip install -e .
 ```
 
 ## Data preparation: SemanticKITTI
 
 Download the [SemanticKITTI](http://www.semantic-kitti.org/dataset.html#overview) dataset inside the directory `data/kitti/`. The directory structure should look like this:
 
-```
+```text
 ./
 └── data/
     └── kitti

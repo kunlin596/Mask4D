@@ -171,17 +171,17 @@ class SemanticDataset(Dataset):
         if len(intensity.shape) == 2:
             intensity = np.squeeze(intensity)
         if self.split == "test":
-            annotated_data = np.expand_dims(np.zeros_like(points[:, 0], dtype=int), axis=1)
+            annotated_data = np.expand_dims(np.zeros_like(points[:, 0], dtype=np.uint32), axis=1)
             sem_labels = annotated_data
             ins_labels = annotated_data
         else:
             annotated_data = np.fromfile(
                 self.im_idx[index].replace("velodyne", "labels")[:-3] + "label",
-                dtype=np.int32,
+                dtype=np.uint32,
             ).reshape((-1, 1))
             sem_labels = annotated_data & 0xFFFF
             ins_labels = annotated_data >> 16
-            sem_labels = np.vectorize(self.learning_map.__getitem__)(sem_labels)
+            sem_labels = np.vectorize(self.learning_map.__getitem__)(sem_labels).astype(np.uint32)
 
         return (xyz, sem_labels, ins_labels, intensity, fname, pose)
 
@@ -310,7 +310,7 @@ class MaskSemanticDataset(Dataset):
         masks = torch.from_numpy(np.concatenate((stuff_masks, things_masks)))
         masks_cls = torch.from_numpy(np.concatenate((stuff_cls, things_cls)))
         stuff_masks_ids.extend(things_masks_ids)
-        masks_ids = torch.tensor(stuff_masks_ids)
+        masks_ids = torch.tensor(stuff_masks_ids, dtype=torch.uint32)
 
         assert (
             masks.shape[0] == masks_cls.shape[0]
